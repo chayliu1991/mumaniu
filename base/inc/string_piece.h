@@ -45,16 +45,19 @@ public:
         ptr_ = NULL;
         length_ = 0;
     }
+
     void set(const char *buffer, int len)
     {
         ptr_ = buffer;
         length_ = len;
     }
+
     void set(const char *str)
     {
         ptr_ = str;
         length_ = static_cast<int>(strlen(str));
     }
+
     void set(const void *buffer, int len)
     {
         ptr_ = reinterpret_cast<const char *>(buffer);
@@ -76,9 +79,9 @@ public:
 
     bool operator==(const StringPiece &x) const
     {
-        return ((length_ == x.length_) &&
-                (memcmp(ptr_, x.ptr_, length_) == 0));
+        return ((length_ == x.length_) && (memcmp(ptr_, x.ptr_, length_) == 0));
     }
+
     bool operator!=(const StringPiece &x) const
     {
         return !(*this == x);
@@ -90,10 +93,12 @@ public:
         int r = memcmp(ptr_, x.ptr_, length_ < x.length_ ? length_ : x.length_); \
         return ((r auxcmp 0) || ((r == 0) && (length_ cmp x.length_)));          \
     }
+
     STRINGPIECE_BINARY_PREDICATE(<, <);
     STRINGPIECE_BINARY_PREDICATE(<=, <);
     STRINGPIECE_BINARY_PREDICATE(>=, >);
     STRINGPIECE_BINARY_PREDICATE(>, >);
+
 #undef STRINGPIECE_BINARY_PREDICATE
 
     int compare(const StringPiece &x) const
@@ -109,12 +114,12 @@ public:
         return r;
     }
 
-    string as_string() const
+    std::string as_string() const
     {
-        return string(data(), size());
+        return std::string(data(), size());
     }
 
-    void CopyToString(string *target) const
+    void copy_to_string(std::string *target) const
     {
         target->assign(ptr_, length_);
     }
@@ -125,3 +130,18 @@ public:
         return ((length_ >= x.length_) && (memcmp(ptr_, x.ptr_, x.length_) == 0));
     }
 };
+
+#ifdef HAVE_TYPE_TRAITS
+// This makes vector<StringPiece> really fast for some STL implementations
+template <>
+struct __type_traits<StringPiece>
+{
+    typedef __true_type has_trivial_default_constructor;
+    typedef __true_type has_trivial_copy_constructor;
+    typedef __true_type has_trivial_assignment_operator;
+    typedef __true_type has_trivial_destructor;
+    typedef __true_type is_POD_type;
+};
+#endif
+
+std::ostream &operator<<(std::ostream &o, const StringPiece &piece);
